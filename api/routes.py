@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from api.models import JobRequest, JobResponse
 from api.database import get_db, get_redis
-from queue.redis_queue import enqueue_job, queue_depth
+from taskq.redis_queue import enqueue_job, queue_depth
 
 router = APIRouter()
 
