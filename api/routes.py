@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from api.models import JobRequest, JobResponse
 from api.database import get_db, get_redis
 from taskq.redis_queue import enqueue_job, queue_depth
+import json
 
 router = APIRouter()
 
@@ -30,17 +31,16 @@ async def create_job(req: JobRequest):
     # 1. Insert row (job_id filled after we know the id)
     row = await db.fetchrow(
         """
-        INSERT INTO jobs
-            (handler, payload, priority, queue, max_retries, run_at)
-        VALUES
-            ($1, $2, $3, $4, 3, NOW() + $5 * interval '1 second')
+        INSERT INTO jobs (handler, payload, priority, queue,
+                      max_retries, run_at)
+        VALUES ($1, $2::jsonb, $3, $4, 3, NOW() + $5 * interval '1 second')
         RETURNING id, created_at
         """,
-        req.handler,
-        req.payload,
+        req.handler, 
+        json.dumps(req.payload), 
         req.priority,
-        req.queue,
-        req.delay_seconds,
+        req.queue, 
+        req.delay_seconds
     )
 
     job_id = to_base62(row["id"])
