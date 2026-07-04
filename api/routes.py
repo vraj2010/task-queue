@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from api.models import JobRequest, JobResponse
 from api.database import get_db, get_redis
+from api.metrics import get_all_metrics
 from taskq.redis_queue import (
     enqueue_job,
     enqueue_delayed,
@@ -69,13 +70,13 @@ async def create_job(req: JobRequest):
         await enqueue_job(r, req.queue, job_id, req.priority, 0)
 
     return {
-        "job_id": job_id,
-        "status": "pending",
-        "handler": req.handler,
-        "queue": req.queue,
-        "priority": req.priority,
+        "job_id":        job_id,
+        "status":        "pending",
+        "handler":       req.handler,
+        "queue":         req.queue,
+        "priority":      req.priority,
         "delay_seconds": req.delay_seconds,
-        "created_at": row["created_at"],
+        "created_at":    row["created_at"],
     }
 
 
@@ -111,10 +112,15 @@ async def get_depth(queue: str):
 async def peek_delayed_jobs():
     r = await get_redis()
 
-    jobs = await peek_delayed(r, limit=10)
+    jobs  = await peek_delayed(r, limit=10)
     depth = await r.zcard("queue:delayed")
 
     return {
-        "depth": depth,
+        "depth":     depth,
         "next_jobs": jobs,
     }
+
+
+@router.get("/metrics")
+async def metrics():
+    return await get_all_metrics()
