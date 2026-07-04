@@ -2,6 +2,7 @@ import asyncio
 
 from worker.pool import WorkerPool
 from worker.monitor import recovery_monitor
+from worker.scheduler import scheduler_loop
 
 CONCURRENCY = 4  # number of concurrent worker coroutines
 
@@ -12,9 +13,11 @@ async def main():
         queue="default",
     )
 
+    # Run pool + monitor + scheduler all concurrently
     await asyncio.gather(
         pool.run(),
         recovery_monitor(check_interval=60),
+        scheduler_loop(queue="default", check_interval=1.0),
     )
 
 
