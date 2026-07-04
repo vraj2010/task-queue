@@ -2,7 +2,13 @@ from fastapi import APIRouter, HTTPException
 
 from api.models import JobRequest, JobResponse
 from api.database import get_db, get_redis
-from taskq.redis_queue import enqueue_job, queue_depth
+from taskq.redis_queue import (
+    enqueue_job,
+    enqueue_delayed,
+    queue_depth,
+    peek_delayed,
+)
+import time
 import json
 
 router = APIRouter()
@@ -36,11 +42,11 @@ async def create_job(req: JobRequest):
         VALUES ($1, $2::jsonb, $3, $4, 3, NOW() + $5 * interval '1 second')
         RETURNING id, created_at
         """,
-        req.handler, 
-        json.dumps(req.payload), 
+        req.handler,
+        json.dumps(req.payload),
         req.priority,
-        req.queue, 
-        req.delay_seconds
+        req.queue,
+        req.delay_seconds,
     )
 
     job_id = to_base62(row["id"])
@@ -52,14 +58,15 @@ async def create_job(req: JobRequest):
         row["id"],
     )
 
-    # 3. Push to Redis
-    await enqueue_job(
-        r,
-        req.queue,
-        job_id,
-        req.priority,
-        req.delay_seconds,
-    )
+    # 3. Push to correct queue based on delay
+    if req.delay_seconds > 0:
+        # Delayed job → goes to queue:delayed sorted set
+        # score = Unix timestamp (ms) of when it should run
+        run_at_ms = int(time.time() * 1000) + (req.delay_seconds * 1000)
+        await enqueue_delayed(r, job_id, run_at_ms)
+    else:
+        # Immediate job → goes straight to active queue
+        await enqueue_job(r, req.queue, job_id, req.priority, 0)
 
     return {
         "job_id": job_id,
@@ -67,6 +74,7 @@ async def create_job(req: JobRequest):
         "handler": req.handler,
         "queue": req.queue,
         "priority": req.priority,
+        "delay_seconds": req.delay_seconds,
         "created_at": row["created_at"],
     }
 
@@ -96,4 +104,17 @@ async def get_depth(queue: str):
     return {
         "queue": queue,
         "depth": await queue_depth(r, queue),
+    }
+
+
+@router.get("/queues/delayed/peek")
+async def peek_delayed_jobs():
+    r = await get_redis()
+
+    jobs = await peek_delayed(r, limit=10)
+    depth = await r.zcard("queue:delayed")
+
+    return {
+        "depth": depth,
+        "next_jobs": jobs,
     }
