@@ -53,3 +53,44 @@ async def ack_job(r: Redis, job_id: str):
 
 async def queue_depth(r: Redis, queue: str) -> int:
     return await r.zcard(f"queue:{queue}")
+
+async def enqueue_delayed(
+    r,
+    job_id: str,
+    run_at_ms: int,  # Unix timestamp in milliseconds
+):
+    """
+    Push a job into the delayed sorted set.
+
+    Score = run_at_ms so ZRANGEBYSCORE can find due jobs.
+    """
+    await r.zadd(
+        "queue:delayed",
+        {job_id: run_at_ms},
+    )
+
+
+async def delayed_queue_depth(r) -> int:
+    return await r.zcard("queue:delayed")
+
+
+async def peek_delayed(r, limit: int = 5) -> list:
+    """Returns next N delayed jobs with their scheduled run time."""
+    items = await r.zrange(
+        "queue:delayed",
+        0,
+        limit - 1,
+        withscores=True,
+    )
+
+    return [
+        {
+            "job_id": job_id,
+            "run_at_ms": int(score),
+            "runs_in_seconds": max(
+                0,
+                int((score - time.time() * 1000) / 1000),
+            ),
+        }
+        for job_id, score in items
+    ]
