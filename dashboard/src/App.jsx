@@ -5,7 +5,7 @@ import {
 } from "recharts";
 
 // ── Config ─────────────────────────────────────────────────────────────────
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api/v1";
 const REFRESH_MS = 5000;
 
 // ── Palette ────────────────────────────────────────────────────────────────
