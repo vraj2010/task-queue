@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: task-queue-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+
+  - type: worker
+    name: task-queue-worker
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m worker.run
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
