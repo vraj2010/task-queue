@@ -4,7 +4,7 @@ from worker.pool import WorkerPool
 from worker.monitor import recovery_monitor
 from worker.scheduler import scheduler_loop
 
-CONCURRENCY = 4  # number of concurrent worker coroutines
+CONCURRENCY = 2  # number of concurrent worker coroutines
 
 
 async def main():

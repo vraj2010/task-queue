@@ -11,14 +11,15 @@ _redis = None
 
 async def get_db() -> asyncpg.Pool:
     global _db_pool
-
     if _db_pool is None:
+        dsn = os.getenv("DATABASE_URL")
+        if not dsn:
+            raise RuntimeError(".env not loaded — DATABASE_URL is None")
         _db_pool = await asyncpg.create_pool(
-            dsn=os.getenv("DATABASE_URL"),
-            min_size=2,
-            max_size=10
+            dsn=dsn,
+            min_size=1,
+            max_size=3
         )
-
     return _db_pool
 
 
