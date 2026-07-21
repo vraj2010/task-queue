@@ -695,7 +695,7 @@ export default function App() {
 
         {/* Nav tabs */}
         <div style={{ display:"flex", gap:4 }}>
-          {[["dashboard","📊 Dashboard"],["monitor","🖥 Monitor"]].map(([tab,label]) => (
+          {[["dashboard","Dashboard"],["monitor","Monitor"]].map(([tab,label]) => (
             <button key={tab} onClick={()=>setActiveTab(tab)} style={{
               padding:"6px 16px", borderRadius:7, fontSize:12, fontWeight:600,
               background: activeTab===tab ? C.blue : "transparent",
