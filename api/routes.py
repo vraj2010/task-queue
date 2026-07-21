@@ -124,3 +124,55 @@ async def peek_delayed_jobs():
 @router.get("/metrics")
 async def metrics():
     return await get_all_metrics()
+
+@router.get("/jobs")
+async def list_jobs(
+    status: str = None,
+    handler: str = None,
+    page: int = 1,
+    limit: int = 20,
+):
+    db = await get_db()
+    offset = (page - 1) * limit
+
+    conditions = []
+    params = []
+    idx = 1
+
+    if status:
+        conditions.append(f"status = ${idx}")
+        params.append(status)
+        idx += 1
+
+    if handler:
+        conditions.append(f"handler ILIKE ${idx}")
+        params.append(f"%{handler}%")
+        idx += 1
+
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+    count_row = await db.fetchrow(
+        f"SELECT COUNT(*) as total FROM jobs {where}", *params
+    )
+    total = count_row["total"]
+
+    rows = await db.fetch(
+        f"""
+        SELECT job_id, handler, status, priority, queue,
+               attempts, max_retries, payload, result,
+               error, run_at, started_at, completed_at, created_at
+        FROM jobs
+        {where}
+        ORDER BY id DESC
+        LIMIT ${idx} OFFSET ${idx + 1}
+        """,
+        *params, limit, offset
+    )
+
+    return {
+        "jobs":  [dict(r) for r in rows],
+        "total": total,
+        "page":  page,
+        "limit": limit,
+        "pages": max(1, -(-total // limit)),
+    }
