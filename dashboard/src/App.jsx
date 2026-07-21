@@ -148,8 +148,8 @@ function JobSimulator({ onJobsSubmitted }) {
   const [toast,       setToast]       = useState(null);
 
   const HANDLERS = [
-    { value:"send_email",    label:"Send Email",    icon:"📧" },
-    { value:"resize_image",  label:"Resize Image",  icon:"🖼️" },
+    { value:"send_email",    label:"Send Email" },
+    { value:"resize_image",  label:"Resize Image" },
   ];
 
   async function submit() {
@@ -175,8 +175,8 @@ function JobSimulator({ onJobsSubmitted }) {
     setSubmitting(false);
     const ok    = results.filter(r => r.job_id);
     const fail  = results.filter(r => r.error);
-    if (ok.length)   setToast({ type:"ok",   text:`✓ ${ok.length} job${ok.length>1?"s":""} submitted — IDs: ${ok.map(r=>r.job_id).join(", ")}` });
-    if (fail.length) setToast({ type:"err",  text:`✗ Error: ${fail[0].error}` });
+    if (ok.length)   setToast({ type:"ok",   text:`${ok.length} job${ok.length>1?"s":""} submitted — IDs: ${ok.map(r=>r.job_id).join(", ")}` });
+    if (fail.length) setToast({ type:"err",  text:`Error: ${fail[0].error}` });
     onJobsSubmitted(ok);
   }
 
@@ -192,7 +192,7 @@ function JobSimulator({ onJobsSubmitted }) {
           <div style={{ fontSize:11, color:C.muted, marginBottom:6 }}>Handler</div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
             {HANDLERS.map(h => (
-              <ToggleBtn key={h.value} value={`${h.icon} ${h.label}`}
+              <ToggleBtn key={h.value} value={h.label}
                 active={handler===h.value} onClick={()=>setHandler(h.value)} color={C.blue} />
             ))}
           </div>
@@ -235,7 +235,7 @@ function JobSimulator({ onJobsSubmitted }) {
       </div>
 
       <Btn onClick={submit} disabled={submitting} color={C.blue}>
-        {submitting ? "Submitting…" : `▶ Submit ${count} ${count===1?"job":"jobs"}${delay>0?` (delayed ${delay}s)`:""}`}
+        {submitting ? "Submitting…" : `Submit ${count} ${count===1?"job":"jobs"}${delay>0?` (delayed ${delay}s)`:""}`}
       </Btn>
 
       {toast && (
@@ -392,10 +392,10 @@ function TaskMonitor() {
 
         {/* Auto refresh toggle */}
         <Btn onClick={()=>setAutoRefresh(r=>!r)} small outline color={autoRefresh ? C.green : C.muted}>
-          {autoRefresh ? "⏸ Pause" : "▶ Resume"} auto-refresh
+          {autoRefresh ? "Pause" : "Resume"} auto-refresh
         </Btn>
 
-        <Btn onClick={()=>fetchJobs(page,statusFilter,search)} small outline color={C.blue}>↻ Refresh</Btn>
+        <Btn onClick={()=>fetchJobs(page,statusFilter,search)} small outline color={C.blue}>Refresh</Btn>
       </div>
 
       {/* Stats row */}
@@ -407,7 +407,7 @@ function TaskMonitor() {
         {statusFilter && <span>Filtered: <strong style={{ color:STATUS_COLOR[statusFilter] }}>{statusFilter}</strong></span>}
         {search && <span>Handler: <strong style={{ color:C.text }}>{search}</strong></span>}
         <span style={{ marginLeft:"auto" }}>
-          Page {page} of {pages} · {autoRefresh ? <span style={{ color:C.green }}>● Live</span> : <span style={{ color:C.muted }}>⏸ Paused</span>}
+          Page {page} of {pages} · {autoRefresh ? <span style={{ color:C.green }}>Live</span> : <span style={{ color:C.muted }}>Paused</span>}
         </span>
       </div>
 
@@ -645,7 +645,6 @@ export default function App() {
   if (error && !data) return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"system-ui,sans-serif" }}>
       <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:32, maxWidth:380, textAlign:"center" }}>
-        <div style={{ fontSize:28, marginBottom:12 }}>⚠️</div>
         <div style={{ color:C.text, fontWeight:600, marginBottom:8 }}>Cannot reach API</div>
         <div style={{ color:C.muted, fontSize:13, marginBottom:14 }}>
           Make sure your API server is running at<br/>
@@ -709,12 +708,12 @@ export default function App() {
         </div>
 
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          {error && <span style={{ fontSize:11, color:C.red }}>⚠ stale data</span>}
+          {error && <span style={{ fontSize:11, color:C.red }}>stale data</span>}
           <span style={{ fontSize:11, color:C.muted }}>
             {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : "Connecting…"}
           </span>
           <button onClick={fetchMetrics} style={{ padding:"4px 12px", borderRadius:6, fontSize:12, background:"transparent", border:`1px solid ${C.border}`, color:C.muted, cursor:"pointer" }}>
-            ↻ Refresh
+            Refresh
           </button>
         </div>
       </div>
